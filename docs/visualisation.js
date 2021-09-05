@@ -2,16 +2,12 @@ var apiUri = ""
 
 var nodes, edges, network;
 
-const edgeNames = {
-    marriage: "spouse of"
-}
-
 var instructionText = 'Click on nodes to <b>find related entities</b>. CTRL+click to <b>go to Wikipedia</b>. SHIFT+click to <b>collapse nodes</b>.'
 var retrievalText = "Retrieving data. Please wait...";
 var noMoreDataText = "No more data found...";
 
 function getWikipedia(uri) {
-    return uri.replace("http://ab.org/resource/")
+    return uri.replace("http://ab.org/resource/","http://facebook.com/")
 }
 
 var HttpClient = function() {
@@ -72,7 +68,6 @@ function instruction() {
 };
 
 function visualise(parent, relation, entity) {
-  console.log(parent)
     if (nodes.get(entity._id) == null) {
 
         var node = {
@@ -92,15 +87,6 @@ function visualise(parent, relation, entity) {
             node.size = 30
             node.type = "subject"
             node.expanded = false
-            if (entity.thumbnail != null) {
-                node.image = entity.thumbnail
-                node.shape = 'circularImage'
-                node.brokenImage = "https://image.flaticon.com/icons/svg/149/149071.svg"
-            } else {
-                node.image = "https://image.flaticon.com/icons/svg/149/149071.svg"
-                node.shape = 'circularImage'
-            }
-
             var description = ""
             if (entity.description != null) {
                 description = '<div style="white-space:pre-wrap;">' + entity.description + '</div><br>'
@@ -115,16 +101,16 @@ function visualise(parent, relation, entity) {
         catch (err) { console.log("Error when visualising node: " + JSON.stringify(node)) };
     }
 
-    if (parent != null && relation != null) {
+
         var edge = {}
-        if (relation == "mouse") {
+        if (relation) {
             var vertices = [entity._id, parent];
             vertices.sort();
             edge = {
-                id: vertices[0] + "_marriage_" + vertices[1],
+                id: vertices[0] + "_related_" + vertices[1],
                 from: vertices[0],
                 to: vertices[1],
-                label: edgeNames.marriage,
+                label: relation,
                 arrows: {
                     from: true,
                     to: true
@@ -142,7 +128,7 @@ function visualise(parent, relation, entity) {
             }
         }
         catch (err) { console.log("Error when visualising edge: " + JSON.stringify(edge)) };
-    }
+
 
     for (var property in entity) {
 
