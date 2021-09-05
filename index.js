@@ -29,22 +29,11 @@ async function Demo() {
     // creating the list of all people and their names for FE indexing
 
     let people = []
-    console.info(schema)
 
     console.log("Fetching people's names...")
-
-    // await stapleApi.graphql('{ Subject { _id label } }').then((response) => {
-    //     response.data.Subject.forEach(element => {
-    //         people.push({id: element._id, text:element.label})
-    //         console.log(element.label)
-    //     });
-    //     console.log("...all fetched!")
-    //     });
-    
     await stapleApi.graphql('{ Subject { _id label } }').then((response) => {
         response.data.Subject.forEach(element => {
             people.push({id: element._id, text:element.label})
-            console.log(element.label)
         });
         console.log("...all fetched!")
         });
@@ -56,7 +45,7 @@ async function Demo() {
     
     app.use(express.static("docs"))
 
-    app.get('/people', function (req, res) {
+    app.get('/subject', function (req, res) {
         res.setHeader('Access-Control-Allow-Origin', '*');
         res.send(people)
       })

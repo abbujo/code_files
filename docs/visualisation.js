@@ -3,10 +3,6 @@ var apiUri = ""
 var nodes, edges, network;
 
 const edgeNames = {
-    birthCountry: "country of birth",
-    deathCountry: "country of death",
-    both: "country of birth & death",
-    parenthood: "parent of",
     marriage: "spouse of"
 }
 
@@ -15,7 +11,7 @@ var retrievalText = "Retrieving data. Please wait...";
 var noMoreDataText = "No more data found...";
 
 function getWikipedia(uri) {
-    return uri.replace("http://ab.org/resource/", "https://en.wikipedia.org/wiki/")
+    return uri.replace("http://ab.org/resource/")
 }
 
 var HttpClient = function() {
@@ -76,7 +72,7 @@ function instruction() {
 };
 
 function visualise(parent, relation, entity) {
-
+  console.log(parent)
     if (nodes.get(entity._id) == null) {
 
         var node = {
@@ -92,52 +88,25 @@ function visualise(parent, relation, entity) {
         }
 
 
-        if (entity._type[0] == "Country") {
-            node.shape = 'image'
-            node.image = "https://image.flaticon.com/icons/svg/664/664577.svg"
-            node.size = 60
-            node.label = entity.label
-            node.type = "country"
-            node.mass = 6
-        } else if (entity._type[0] == "Person") {
+         if (entity._type[0] == "Subject") {
             node.size = 30
-            node.type = "person"
+            node.type = "subject"
             node.expanded = false
             if (entity.thumbnail != null) {
                 node.image = entity.thumbnail
                 node.shape = 'circularImage'
                 node.brokenImage = "https://image.flaticon.com/icons/svg/149/149071.svg"
-            } else if (entity.gender == "female") {
-                node.image = "https://image.flaticon.com/icons/svg/201/201634.svg"
-                node.shape = 'circularImage'
-            } else if (entity.gender == "male") {
-                node.image = "https://image.flaticon.com/icons/svg/145/145843.svg"
-                node.shape = 'circularImage'
             } else {
                 node.image = "https://image.flaticon.com/icons/svg/149/149071.svg"
                 node.shape = 'circularImage'
-            }
-
-
-            var year = ""
-            if (entity.birthYear != null || entity.deathYear != null) {
-                year = "\n"
-                if (entity.birthYear != null) {
-                    year = year + String(entity.birthYear)
-                }
-                year = year + " - "
-                if (entity.deathYear != null) {
-                    year = year + String(entity.deathYear)
-                }
             }
 
             var description = ""
             if (entity.description != null) {
                 description = '<div style="white-space:pre-wrap;">' + entity.description + '</div><br>'
             }
-            node.label = decodeURI(entity.label) + year
-            node.title = description + '<b>See:</b> ' + getWikipedia(entity._id)
-
+            node.label = entity.label
+            node.title = description
         }
 
         try {
@@ -148,39 +117,7 @@ function visualise(parent, relation, entity) {
 
     if (parent != null && relation != null) {
         var edge = {}
-        if (relation == "child") {
-            edge = {
-                id: parent + "_parenthood_" + entity._id,
-                from: parent,
-                to: entity._id,
-                label: edgeNames.parenthood,
-                arrows: {
-                    to: true
-                },
-                color: {
-                    color: '#983131',
-                    hover: "#E74E4E",
-                    highlight: "#E74E4E"
-                }
-            }
-        }
-        if (relation == "parent") {
-            edge = {
-                id: entity._id + "_parenthood_" + parent,
-                from: entity._id,
-                to: parent,
-                label: edgeNames.parenthood,
-                arrows: {
-                    to: true
-                },
-                color: {
-                    color: '#983131',
-                    hover: "#E74E4E",
-                    highlight: "#E74E4E"
-                }
-            }
-        }
-        if (relation == "spouse") {
+        if (relation == "mouse") {
             var vertices = [entity._id, parent];
             vertices.sort();
             edge = {
@@ -196,28 +133,6 @@ function visualise(parent, relation, entity) {
                     color: '#543A71',
                     hover: "#A573DC",
                     highlight: "#A573DC"
-                }
-            }
-        }
-        if (relation == "birthCountry" || relation == "deathCountry") {
-            var edgeId = parent + "_country_" + entity._id;
-            if (edges.get(edgeId) != null && edges.get(edgeId).rels.indexOf(relation)==-1) {
-                edges.update([{ id: edgeId, label: edgeNames.both }]);
-            } else {
-                edge = {
-                    id: edgeId,
-                    from: parent,
-                    to: entity._id,
-                    rels: [relation],
-                    label: edgeNames[relation],
-                    arrows: {
-                        to: true
-                    },
-                    "color": {
-                        color: '#0E4E4A',
-                        highlight: '#1FA29A',
-                        hover: '#1FA29A'
-                    }
                 }
             }
         }
@@ -254,10 +169,10 @@ function init(uri) {
     document.getElementById('statement').innerHTML = retrievalText;
     draw();
     var client = new HttpClient();
-    var body = JSON.stringify({ query: '{ Person(filter:{_id: "' + uri + '"}){ _id _type label description gender thumbnail birthYear deathYear birthCountry { _id _type label } deathCountry { _id _type label } } }' })
+    var body = JSON.stringify({ query: '{ Subject(filter:{_id: "' + uri + '"}){ _id _type label description thumbnail } }' })
     client.post(apiUri + "/graphql", body, function(response) {
         
-        visualise(null, null, response.data.Person[0]);
+        visualise(null, null, response.data.Subject[0]);
         instruction();
     });
 };
@@ -266,16 +181,16 @@ function init(uri) {
 function getRelated(parent) {
     var parentNode = nodes.get(parent);
 
-    if (parentNode.type == "person" && !parentNode.expanded) {
+    if (parentNode.type == "subject" && !parentNode.expanded) {
         nodes.update({ id: parent, size: 40, expanded: true });
 
         document.getElementById('statement').innerHTML = retrievalText;
-        var query = '{ Person(filter: { _id:"' + parent + '"}) { _id child { _id _type label description gender thumbnail birthYear deathYear birthCountry { _id _type label } deathCountry { _id _type label } } parent { _id _type label description gender thumbnail birthYear deathYear birthCountry { _id _type label } deathCountry { _id _type label } } spouse { _id _type label description gender thumbnail birthYear deathYear birthCountry { _id _type label } deathCountry { _id _type label } } } }'
+        var query = '{ Subject(filter: { _id:"' + parent + '"}) { _id mouse { _id _type label description thumbnail } } }'
 
         var client = new HttpClient();
         var body = JSON.stringify({ query: query})
         client.post(apiUri + "/graphql", body, function(response) {
-            visualise(null, null, response.data.Person[0]);
+            visualise(null, null, response.data.Subject[0]);
             instruction();
         });
     }
@@ -289,36 +204,35 @@ function downloadData() {
 
     for (uri in nodes._data) {
         var item = nodes._data[uri]
-        if (item.type === "person") {
+        if (item.type === "subject") {
             people.push(item.id)
-        }
-        if (item.type === "country") {
-            countries.push(item.id)
         }
     }
 
-    var query = '{ _CONTEXT { _id _type Person Country label description gender thumbnail birthYear deathYear birthCountry deathCountry } Person(filter:{_id: [' + people.map(function (item) {return '"' + item + '"'}) + ']}){ _id _type label description gender thumbnail birthYear deathYear parent { _id } child { _id } spouse { _id } birthCountry { _id } deathCountry { _id } } Country(filter:{_id: [' + countries.map( function (item) {return '"' + item + '"'}) + ']}) { _id _type label } } '
+    // var query = '{ _CONTEXT { _id _type Person Country label description gender thumbnail birthYear deathYear birthCountry deathCountry } Person(filter:{_id: [' + people.map(function (item) {return '"' + item + '"'}) + ']}){ _id _type label description gender thumbnail birthYear deathYear parent { _id } child { _id } spouse { _id } birthCountry { _id } deathCountry { _id } } Country(filter:{_id: [' + countries.map( function (item) {return '"' + item + '"'}) + ']}) { _id _type label } } '
     
+    var query = '{ _CONTEXT { _id _type Subject label description thumbnail } Subject(filter:{_id: [' + people.map(function (item) {return '"' + item + '"'}) + ']}){ _id _type label description thumbnail mouse { _id }} } '
+    
+
     var client = new HttpClient();	
     var body = JSON.stringify({ query: query});	
     client.post(apiUri + "/graphql", body, function(response) {	
 
-        let peopleKeys = ["parent", "child", "spouse"]
+        let peopleKeys = ["mouse"]
         let countriesKeys = ["birthCountry", "deathCountry"]
-        for (var y in response.data.Person) { 
+        for (var y in response.data.Subject) { 
             for (var x in peopleKeys) {
-                response.data.Person[y][peopleKeys[x]] = response.data.Person[y][peopleKeys[x]].filter(function (item) { return people.indexOf(item._id)>-1})
+                response.data.Subject[y][peopleKeys[x]] = response.data.Subject[y][peopleKeys[x]].filter(function (item) { return people.indexOf(item._id)>-1})
             };
             for (var x in countriesKeys ) {
-                response.data.Person[y][countriesKeys[x]] = response.data.Person[y][countriesKeys[x]].filter(function (item) { return countries.indexOf(item._id)>-1})
+                response.data.Subject[y][countriesKeys[x]] = response.data.Subject[y][countriesKeys[x]].filter(function (item) { return countries.indexOf(item._id)>-1})
             };
         };
         
         result = {	
             "@context": response.data._CONTEXT,	
             "@id": "@graph",	
-            "Person": response.data.Person,	
-            "Country": response.data.Country,	
+            "Subject": response.data.Subject,	
         };
 
         var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(result));	
