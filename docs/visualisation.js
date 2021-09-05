@@ -15,7 +15,7 @@ var retrievalText = "Retrieving data. Please wait...";
 var noMoreDataText = "No more data found...";
 
 function getWikipedia(uri) {
-    return uri.replace("http://dbpedia.org/resource/", "https://en.wikipedia.org/wiki/")
+    return uri.replace("http://ab.org/resource/", "https://en.wikipedia.org/wiki/")
 }
 
 var HttpClient = function() {
@@ -48,7 +48,7 @@ function start() {
     var uriEncoded = location.search.split('uri=')[1];
 
     if (uriEncoded==null) {
-        param = "http://dbpedia.org/resource/Elizabeth_II"
+        param = "http://ab.org/resource/Martha_Vickers"
     } else {
         param = decodeURI(uriEncoded)
     }
