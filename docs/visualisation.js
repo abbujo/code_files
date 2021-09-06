@@ -1,3 +1,4 @@
+const { uuid } = require('uuidv4');
 var apiUri = ""
 
 var nodes, edges, network;
@@ -107,7 +108,7 @@ function visualise(parent, relation, entity) {
             var vertices = [entity._id, parent];
             vertices.sort();
             edge = {
-                id: vertices[0] + "_related_" + vertices[1],
+                id: uuid(),
                 from: vertices[0],
                 to: vertices[1],
                 label: relation,
@@ -186,7 +187,6 @@ function getRelated(parent) {
 function downloadData() {
 
     var people = []
-    var countries = []
 
     for (uri in nodes._data) {
         var item = nodes._data[uri]
@@ -205,13 +205,9 @@ function downloadData() {
     client.post(apiUri + "/graphql", body, function(response) {	
 
         let peopleKeys = ["mouse"]
-        let countriesKeys = ["birthCountry", "deathCountry"]
         for (var y in response.data.Subject) { 
             for (var x in peopleKeys) {
                 response.data.Subject[y][peopleKeys[x]] = response.data.Subject[y][peopleKeys[x]].filter(function (item) { return people.indexOf(item._id)>-1})
-            };
-            for (var x in countriesKeys ) {
-                response.data.Subject[y][countriesKeys[x]] = response.data.Subject[y][countriesKeys[x]].filter(function (item) { return countries.indexOf(item._id)>-1})
             };
         };
         
