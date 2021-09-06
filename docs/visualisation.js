@@ -1,4 +1,3 @@
-const { uuid } = require('uuidv4');
 var apiUri = ""
 
 var nodes, edges, network;
@@ -9,6 +8,10 @@ var noMoreDataText = "No more data found...";
 
 function getWikipedia(uri) {
     return uri.replace("http://ab.org/resource/","http://facebook.com/")
+}
+
+function randomString(length) {
+    return Math.round((Math.pow(36, length + 1) - Math.random() * Math.pow(36, length))).toString(36).slice(1);
 }
 
 var HttpClient = function() {
@@ -108,12 +111,12 @@ function visualise(parent, relation, entity) {
             var vertices = [entity._id, parent];
             vertices.sort();
             edge = {
-                id: uuid(),
-                from: vertices[0],
-                to: vertices[1],
+                id: randomString(20),
+                from: vertices[1],
+                to: vertices[0],
                 label: relation,
                 arrows: {
-                    from: true,
+                    from: false,
                     to: true
                 },
                 color: {
